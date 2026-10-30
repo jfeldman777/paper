@@ -309,6 +309,31 @@ body.view-part #content {
   color: var(--accent);
 }
 
+#content .md-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 1.25rem;
+}
+
+#content .md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+#content .md-table th,
+#content .md-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+#content .md-table th {
+  background: rgba(44, 36, 22, 0.06);
+  font-weight: 600;
+}
+
 #content hr {
   border: none;
   border-top: 1px solid var(--border);

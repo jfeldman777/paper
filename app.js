@@ -54,6 +54,25 @@ function renderInline(text) {
   return html;
 }
 
+function renderTable(rows) {
+  const parsed = rows
+    .filter((row) => !/^\|\s*-/.test(row))
+    .map((row) =>
+      row
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((cell) => cell.trim()),
+    );
+  if (!parsed.length) return "";
+  const [head, ...body] = parsed;
+  const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${body
+    .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
+    .join("")}</tbody>`;
+  return `<div class="md-table-wrap"><table class="md-table">${thead}${tbody}</table></div>`;
+}
+
 function renderMarkdown(src) {
   const lines = String(src || "").replace(/\r\n/g, "\n").split("\n");
   const parts = [];
@@ -99,6 +118,15 @@ function renderMarkdown(src) {
       parts.push(`<ul>${items.join("")}</ul>`);
       continue;
     }
+    if (line.startsWith("|")) {
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(lines[i].trim());
+        i += 1;
+      }
+      parts.push(renderTable(rows));
+      continue;
+    }
     if (/^\d+\.\s+/.test(line)) {
       const items = [];
       while (i < lines.length) {
@@ -119,6 +147,7 @@ function renderMarkdown(src) {
         next === "---" ||
         next.startsWith("#") ||
         next.startsWith(">") ||
+        next.startsWith("|") ||
         /^[-*]\s+/.test(next) ||
         /^\d+\.\s+/.test(next)
       ) {
