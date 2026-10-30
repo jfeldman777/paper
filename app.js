@@ -66,11 +66,13 @@ function renderTable(rows) {
     );
   if (!parsed.length) return "";
   const [head, ...body] = parsed;
+  const first = (head[0] || "").replace(/\.$/, "");
+  const kind = first.length <= 3 ? "md-table-compare" : "md-table-matrix";
   const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${body
     .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
     .join("")}</tbody>`;
-  return `<div class="md-table-wrap"><table class="md-table">${thead}${tbody}</table></div>`;
+  return `<div class="md-table-wrap"><table class="md-table ${kind}">${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {

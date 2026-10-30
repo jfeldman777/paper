@@ -311,27 +311,50 @@ body.view-part #content {
 
 #content .md-table-wrap {
   overflow-x: auto;
-  margin: 0 0 1.25rem;
+  margin: 0.35rem 0 1.35rem;
 }
 
 #content .md-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.98rem;
-  line-height: 1.45;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 #content .md-table th,
 #content .md-table td {
   border: 1px solid var(--border);
-  padding: 0.45rem 0.65rem;
+  padding: 0.5rem 0.7rem;
   text-align: left;
   vertical-align: top;
 }
 
 #content .md-table th {
-  background: rgba(44, 36, 22, 0.06);
+  background: rgba(44, 36, 22, 0.07);
   font-weight: 600;
+}
+
+#content .md-table-matrix th:first-child,
+#content .md-table-matrix td:first-child {
+  width: 30%;
+  font-weight: 600;
+  background: rgba(44, 36, 22, 0.04);
+}
+
+#content .md-table-compare th:first-child,
+#content .md-table-compare td:first-child {
+  width: 2.6rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(44, 36, 22, 0.04);
+}
+
+#content .md-table-compare th:not(:first-child) {
+  text-align: center;
+  width: calc((100% - 2.6rem) / 2);
 }
 
 #content hr {
