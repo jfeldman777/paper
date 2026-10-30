@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Теория уровней и модель человека</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body class="cover-open">
+  <div id="cover-screen" aria-hidden="false">
+    <button type="button" id="cover-enter" class="cover-image-btn" title="Открыть книгу" aria-label="Открыть книгу">
+      <span class="cover-text">
+        <span class="cover-author">Яков Фельдман</span>
+        <span class="cover-line">Теория уровней</span>
+        <span class="cover-line cover-line-small">и модель человека</span>
+        <span class="cover-year">2005</span>
+      </span>
+    </button>
+  </div>
+
+  <main id="main">
+    <article id="reader">
+      <button type="button" id="cover-home" title="К обложке" aria-label="К обложке">
+        <span class="cover-home-title">Теория уровней</span>
+        <span class="cover-home-hint">обложка</span>
+      </button>
+      <div class="page-nav">
+        <button type="button" class="page-prev" title="Предыдущая глава" aria-label="Предыдущая глава">←</button>
+        <p class="page-meta"></p>
+        <button type="button" class="page-next" title="Следующая глава" aria-label="Следующая глава">→</button>
+        <button type="button" id="toc-top" class="toc-btn" title="Оглавление" aria-label="К оглавлению">☰ Оглавление</button>
+      </div>
+      <h2 id="page-title"></h2>
+      <div id="content"></div>
+      <div class="page-nav page-nav-bottom">
+        <button type="button" class="page-prev" title="Предыдущая глава" aria-label="Предыдущая глава">←</button>
+        <p class="page-meta"></p>
+        <button type="button" class="page-next" title="Следующая глава" aria-label="Следующая глава">→</button>
+        <button type="button" id="toc-bottom" class="toc-btn" title="Оглавление" aria-label="К оглавлению">☰ Оглавление</button>
+      </div>
+    </article>
+  </main>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
