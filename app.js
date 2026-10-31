@@ -66,7 +66,8 @@ function renderTable(rows) {
     );
   if (!parsed.length) return "";
   const [head, ...body] = parsed;
-  const kind = head.length <= 3 ? "md-table-compare" : "md-table-matrix";
+  const kind =
+    head.length <= 2 ? "md-table-list" : head.length === 3 ? "md-table-compare" : "md-table-matrix";
   const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${body
     .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)

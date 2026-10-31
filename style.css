@@ -356,6 +356,16 @@ body.view-part #content {
   text-align: center;
 }
 
+#content .md-table-list th:first-child,
+#content .md-table-list td:first-child {
+  width: 2.6rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(44, 36, 22, 0.04);
+}
+
 #content .md-table-compare th:first-child,
 #content .md-table-compare td:first-child {
   width: 2.6rem;
