@@ -337,9 +337,23 @@ body.view-part #content {
 
 #content .md-table-matrix th:first-child,
 #content .md-table-matrix td:first-child {
+  width: 2.6rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(44, 36, 22, 0.04);
+}
+
+#content .md-table-matrix th:nth-child(2),
+#content .md-table-matrix td:nth-child(2) {
   width: 30%;
   font-weight: 600;
   background: rgba(44, 36, 22, 0.04);
+}
+
+#content .md-table-matrix th:nth-child(n+3) {
+  text-align: center;
 }
 
 #content .md-table-compare th:first-child,
