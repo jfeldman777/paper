@@ -41,6 +41,9 @@ function escapeAttr(text) {
 
 function renderInline(text) {
   let html = escapeHtml(text);
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
+    return `<img class="md-pict" src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`;
+  });
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
     if (href.startsWith("#")) return `<a href="${href}">${label}</a>`;
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
@@ -73,11 +76,12 @@ function renderTable(rows) {
   const [head, ...body] = parsed;
   const kind =
     head.length <= 2 ? "md-table-list" : head.length === 3 ? "md-table-compare" : "md-table-matrix";
+  const hasPict = body.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
   const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${body
     .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
     .join("")}</tbody>`;
-  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}">${thead}${tbody}</table></div>`;
+  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${hasPict ? " md-table-pict" : ""}">${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {

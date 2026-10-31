@@ -415,6 +415,39 @@ body.view-part #content {
   width: calc((100% - 2.6rem) / 2);
 }
 
+#content img.md-pict {
+  display: block;
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: contain;
+  margin: 0.1rem auto;
+}
+
+#content .md-table-pict th:last-child,
+#content .md-table-pict td:last-child {
+  width: 8rem;
+  text-align: center;
+  vertical-align: middle;
+  background: #fff;
+}
+
+#content .md-table-pict th:nth-child(2),
+#content .md-table-pict td:nth-child(2) {
+  width: auto;
+}
+
+#content .md-cols-4 th:nth-child(2),
+#content .md-cols-4 td:nth-child(2) {
+  width: 28%;
+}
+
+#content .md-cols-4 th:nth-child(4),
+#content .md-cols-4 td:nth-child(4) {
+  width: 22%;
+  text-align: center;
+  white-space: nowrap;
+}
+
 #content hr {
   border: none;
   border-top: 1px solid var(--border);
