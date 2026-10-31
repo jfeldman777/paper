@@ -54,16 +54,20 @@ function renderInline(text) {
   return html;
 }
 
+function splitTableCells(row) {
+  const esc = "\u0000";
+  return row
+    .replace(/\\\|/g, esc)
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim().replaceAll(esc, "|"));
+}
+
 function renderTable(rows) {
   const parsed = rows
     .filter((row) => !/^\|\s*-/.test(row))
-    .map((row) =>
-      row
-        .replace(/^\|/, "")
-        .replace(/\|$/, "")
-        .split("|")
-        .map((cell) => cell.trim()),
-    );
+    .map((row) => splitTableCells(row));
   if (!parsed.length) return "";
   const [head, ...body] = parsed;
   const kind =
@@ -72,7 +76,7 @@ function renderTable(rows) {
   const tbody = `<tbody>${body
     .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
     .join("")}</tbody>`;
-  return `<div class="md-table-wrap"><table class="md-table ${kind}">${thead}${tbody}</table></div>`;
+  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}">${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {

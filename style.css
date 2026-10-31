@@ -356,6 +356,18 @@ body.view-part #content {
   text-align: center;
 }
 
+#content .md-cols-5 th:nth-child(2),
+#content .md-cols-5 td:nth-child(2) {
+  width: 20%;
+}
+
+#content .md-cols-5 th:nth-child(3),
+#content .md-cols-5 td:nth-child(3),
+#content .md-cols-5 th:nth-child(4),
+#content .md-cols-5 td:nth-child(4) {
+  width: 14%;
+}
+
 #content .md-table-list th:first-child,
 #content .md-table-list td:first-child {
   width: 2.6rem;
