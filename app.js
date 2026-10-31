@@ -51,6 +51,7 @@ function renderInline(text) {
     return `${prefix}<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${trimmed}</a>${suffix}`;
   });
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\|([^|<]{1,40})\|/g, '<span class="md-abs">$1</span>');
   return html;
 }
 

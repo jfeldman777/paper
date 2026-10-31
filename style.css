@@ -362,10 +362,32 @@ body.view-part #content {
 }
 
 #content .md-cols-5 th:nth-child(3),
-#content .md-cols-5 td:nth-child(3),
+#content .md-cols-5 td:nth-child(3) {
+  width: 22%;
+  white-space: nowrap;
+  text-align: center;
+  padding-left: 0.85rem;
+  padding-right: 0.85rem;
+}
+
 #content .md-cols-5 th:nth-child(4),
 #content .md-cols-5 td:nth-child(4) {
   width: 14%;
+}
+
+#content .md-abs {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+#content .md-abs::before,
+#content .md-abs::after {
+  content: "";
+  display: inline-block;
+  height: 1.2em;
+  border-left: 1.7px solid currentColor;
+  vertical-align: -0.22em;
+  margin: 0 0.14em;
 }
 
 #content .md-table-list th:first-child,
