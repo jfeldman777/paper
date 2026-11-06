@@ -75,7 +75,13 @@ function renderTable(rows) {
   if (!parsed.length) return "";
   const [head, ...body] = parsed;
   const kind =
-    head.length <= 2 ? "md-table-list" : head.length === 3 ? "md-table-compare" : "md-table-matrix";
+    head.length <= 2
+      ? "md-table-list"
+      : head.length === 3
+        ? head[0].trim().length <= 2
+          ? "md-table-compare"
+          : "md-table-fields"
+        : "md-table-matrix";
   const hasPict = body.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
   const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
   const tbody = `<tbody>${body

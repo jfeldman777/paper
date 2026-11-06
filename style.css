@@ -415,6 +415,26 @@ body.view-part #content {
   width: calc((100% - 2.6rem) / 2);
 }
 
+#content .md-table-fields th:first-child,
+#content .md-table-fields td:first-child {
+  width: 6.5rem;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(44, 36, 22, 0.04);
+}
+
+#content .md-table-fields th:nth-child(2),
+#content .md-table-fields td:nth-child(2) {
+  width: 28%;
+}
+
+#content .md-table-fields th:not(:first-child) {
+  text-align: center;
+}
+
 #content img.md-pict {
   display: block;
   width: 3.25rem;
