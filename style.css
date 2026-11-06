@@ -428,10 +428,19 @@ body.view-part #content {
 
 #content .md-table-fields th:nth-child(2),
 #content .md-table-fields td:nth-child(2) {
-  width: 28%;
+  width: 46%;
 }
 
 #content .md-table-fields th:not(:first-child) {
+  text-align: center;
+}
+
+#content .md-table-grid th,
+#content .md-table-grid td {
+  width: 33.33%;
+}
+
+#content .md-table-grid th {
   text-align: center;
 }
 
@@ -466,6 +475,29 @@ body.view-part #content {
   width: 22%;
   text-align: center;
   white-space: nowrap;
+}
+
+#content .md-table-level th:first-child,
+#content .md-table-level td:first-child {
+  width: 5.2rem;
+  white-space: nowrap;
+}
+
+#content .md-table-level th:nth-child(2),
+#content .md-table-level td:nth-child(2) {
+  width: 24%;
+}
+
+#content .md-table-level th:nth-child(3),
+#content .md-table-level td:nth-child(3) {
+  width: 26%;
+}
+
+#content .md-table-level th:nth-child(4),
+#content .md-table-level td:nth-child(4) {
+  width: 32%;
+  white-space: normal;
+  text-align: left;
 }
 
 #content hr {

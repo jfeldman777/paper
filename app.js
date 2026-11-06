@@ -54,6 +54,7 @@ function renderInline(text) {
     return `${prefix}<a href="${trimmed}" target="_blank" rel="noopener noreferrer">${trimmed}</a>${suffix}`;
   });
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
   html = html.replace(/\|([^|<]{1,40})\|/g, '<span class="md-abs">$1</span>');
   return html;
 }
@@ -74,20 +75,36 @@ function renderTable(rows) {
     .map((row) => splitTableCells(row));
   if (!parsed.length) return "";
   const [head, ...body] = parsed;
+  const first = head[0].trim();
   const kind =
     head.length <= 2
       ? "md-table-list"
       : head.length === 3
-        ? head[0].trim().length <= 2
+        ? first === "№" || first.length <= 2
           ? "md-table-compare"
-          : "md-table-fields"
+          : first === "Уровень"
+            ? "md-table-fields"
+            : "md-table-grid"
         : "md-table-matrix";
   const hasPict = body.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
-  const thead = `<thead><tr>${head.map((c) => `<th>${renderInline(c)}</th>`).join("")}</tr></thead>`;
-  const tbody = `<tbody>${body
-    .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
-    .join("")}</tbody>`;
-  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${hasPict ? " md-table-pict" : ""}">${thead}${tbody}</table></div>`;
+  const levelCols = head.length >= 4 && (first === "Уровень" || first === "№-№") ? " md-table-level" : "";
+  const rowHtml = (cells, tag) => {
+    let html = "";
+    for (let i = 0; i < cells.length; i += 1) {
+      let span = 1;
+      while (i + span < cells.length && cells[i + span].trim() === "^") span += 1;
+      const attrs = span > 1 ? ` colspan="${span}"` : "";
+      html += `<${tag}${attrs}>${renderInline(cells[i])}</${tag}>`;
+      i += span - 1;
+    }
+    return html;
+  };
+  const thead = `<thead><tr>${rowHtml(head, "th")}</tr></thead>`;
+  const tbody = `<tbody>${body.map((r) => `<tr>${rowHtml(r, "td")}</tr>`).join("")}</tbody>`;
+  const colgroup = first === "№-№"
+    ? `<colgroup><col style="width:4.5rem"><col style="width:34%"><col style="width:24%"><col style="width:24%"></colgroup>`
+    : "";
+  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${levelCols}${hasPict ? " md-table-pict" : ""}">${colgroup}${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {
