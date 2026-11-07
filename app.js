@@ -86,9 +86,13 @@ function renderTable(rows) {
             ? "md-table-fields"
             : "md-table-grid"
         : "md-table-matrix";
-  const hasPict = parsed.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
+  const pictRe = /!\[[^\]]*\]\([^)]+\)/;
+  const pictCol = head.findIndex((_, col) => parsed.some((row) => pictRe.test(row[col] || "")));
+  const hasPict = pictCol >= 0;
   const levelCols = head.length === 4 && (first === "Уровень" || first === "№-№") ? " md-table-level" : "";
-  const ageCols = head[1] && head[1].includes("Возраст") ? " md-table-age" : "";
+  const ageCols = head.length === 3 && head[1] && head[1].includes("Возраст") ? " md-table-age" : "";
+  const levelList = head.length <= 2 && first === "Уровень" ? " md-table-level-list" : "";
+  const numCols = head.length === 4 && first === "№" ? " md-table-num" : "";
   let headerRows = 1;
   while (headerRows < parsed.length && parsed[headerRows][0].trim() === "~") headerRows += 1;
   const spanAt = (r, c) => {
@@ -118,10 +122,12 @@ function renderTable(rows) {
     colgroup = `<colgroup><col style="width:4.5rem"><col style="width:34%"><col style="width:24%"><col style="width:24%"></colgroup>`;
   } else if (first === "Уровень" && head.length === 8) {
     colgroup = `<colgroup><col style="width:4.8rem"><col style="width:3.4rem"><col><col><col><col style="width:4.8rem"><col><col></colgroup>`;
+  } else if (first === "Уровень" && head.length === 6) {
+    colgroup = `<colgroup><col style="width:4.8rem"><col style="width:5.5rem"><col style="width:3.2rem"><col style="width:4.6rem"><col><col style="width:9.2rem"></colgroup>`;
   } else if (first === "Уровень" && head.length === 11) {
     colgroup = `<colgroup><col style="width:4.6rem">${"<col>".repeat(10)}</colgroup>`;
   }
-  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${levelCols}${ageCols}${hasPict ? " md-table-pict" : ""}">${colgroup}${thead}${tbody}</table></div>`;
+  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${levelCols}${ageCols}${levelList}${numCols}${hasPict ? (pictCol === head.length - 1 ? " md-table-pict" : " md-table-pict-mid") : ""}">${colgroup}${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {
