@@ -444,6 +444,13 @@ body.view-part #content {
   text-align: center;
 }
 
+#content img.md-fig {
+  display: block;
+  max-width: min(100%, 36rem);
+  height: auto;
+  margin: 0.9rem auto 1.15rem;
+}
+
 #content img.md-pict {
   display: block;
   width: 3.25rem;

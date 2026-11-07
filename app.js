@@ -42,7 +42,8 @@ function escapeAttr(text) {
 function renderInline(text) {
   let html = escapeHtml(text);
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
-    return `<img class="md-pict" src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`;
+    const cls = src.includes("pict/") ? "md-pict" : "md-fig";
+    return `<img class="${cls}" src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`;
   });
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
     if (href.startsWith("#")) return `<a href="${href}">${label}</a>`;
