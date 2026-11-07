@@ -74,7 +74,7 @@ function renderTable(rows) {
     .filter((row) => !/^\|\s*-/.test(row))
     .map((row) => splitTableCells(row));
   if (!parsed.length) return "";
-  const [head, ...body] = parsed;
+  const head = parsed[0];
   const first = head[0].trim();
   const kind =
     head.length <= 2
@@ -86,25 +86,42 @@ function renderTable(rows) {
             ? "md-table-fields"
             : "md-table-grid"
         : "md-table-matrix";
-  const hasPict = body.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
-  const levelCols = head.length >= 4 && (first === "Уровень" || first === "№-№") ? " md-table-level" : "";
-  const rowHtml = (cells, tag) => {
+  const hasPict = parsed.some((row) => row.some((cell) => /!\[[^\]]*\]\([^)]+\)/.test(cell)));
+  const levelCols = head.length === 4 && (first === "Уровень" || first === "№-№") ? " md-table-level" : "";
+  const ageCols = head[1] && head[1].includes("Возраст") ? " md-table-age" : "";
+  let headerRows = 1;
+  while (headerRows < parsed.length && parsed[headerRows][0].trim() === "~") headerRows += 1;
+  const spanAt = (r, c) => {
+    const row = parsed[r];
+    let colspan = 1;
+    while (c + colspan < row.length && row[c + colspan].trim() === "^") colspan += 1;
+    let rowspan = 1;
+    while (r + rowspan < parsed.length && parsed[r + rowspan][c] && parsed[r + rowspan][c].trim() === "~") rowspan += 1;
+    return { colspan, rowspan };
+  };
+  const rowHtml = (r, tag) => {
+    const cells = parsed[r];
     let html = "";
-    for (let i = 0; i < cells.length; i += 1) {
-      let span = 1;
-      while (i + span < cells.length && cells[i + span].trim() === "^") span += 1;
-      const attrs = span > 1 ? ` colspan="${span}"` : "";
-      html += `<${tag}${attrs}>${renderInline(cells[i])}</${tag}>`;
-      i += span - 1;
+    for (let c = 0; c < cells.length; c += 1) {
+      const raw = cells[c].trim();
+      if (raw === "^" || raw === "~") continue;
+      const { colspan, rowspan } = spanAt(r, c);
+      const attrs = `${colspan > 1 ? ` colspan="${colspan}"` : ""}${rowspan > 1 ? ` rowspan="${rowspan}"` : ""}`;
+      html += `<${tag}${attrs}>${renderInline(cells[c])}</${tag}>`;
     }
     return html;
   };
-  const thead = `<thead><tr>${rowHtml(head, "th")}</tr></thead>`;
-  const tbody = `<tbody>${body.map((r) => `<tr>${rowHtml(r, "td")}</tr>`).join("")}</tbody>`;
-  const colgroup = first === "№-№"
-    ? `<colgroup><col style="width:4.5rem"><col style="width:34%"><col style="width:24%"><col style="width:24%"></colgroup>`
-    : "";
-  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${levelCols}${hasPict ? " md-table-pict" : ""}">${colgroup}${thead}${tbody}</table></div>`;
+  const thead = `<thead>${parsed.slice(0, headerRows).map((_, r) => `<tr>${rowHtml(r, "th")}</tr>`).join("")}</thead>`;
+  const tbody = `<tbody>${parsed.slice(headerRows).map((_, i) => `<tr>${rowHtml(headerRows + i, "td")}</tr>`).join("")}</tbody>`;
+  let colgroup = "";
+  if (first === "№-№") {
+    colgroup = `<colgroup><col style="width:4.5rem"><col style="width:34%"><col style="width:24%"><col style="width:24%"></colgroup>`;
+  } else if (first === "Уровень" && head.length === 8) {
+    colgroup = `<colgroup><col style="width:4.8rem"><col style="width:3.4rem"><col><col><col><col style="width:4.8rem"><col><col></colgroup>`;
+  } else if (first === "Уровень" && head.length === 11) {
+    colgroup = `<colgroup><col style="width:4.6rem">${"<col>".repeat(10)}</colgroup>`;
+  }
+  return `<div class="md-table-wrap"><table class="md-table ${kind} md-cols-${head.length}${levelCols}${ageCols}${hasPict ? " md-table-pict" : ""}">${colgroup}${thead}${tbody}</table></div>`;
 }
 
 function renderMarkdown(src) {

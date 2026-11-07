@@ -500,6 +500,44 @@ body.view-part #content {
   text-align: left;
 }
 
+#content .md-table-age th:nth-child(2),
+#content .md-table-age td:nth-child(2) {
+  width: 7.2rem;
+  white-space: nowrap;
+  text-align: center;
+}
+
+#content .md-cols-8.md-table-matrix th:first-child,
+#content .md-cols-8.md-table-matrix td:first-child,
+#content .md-cols-11.md-table-matrix th:first-child,
+#content .md-cols-11.md-table-matrix td:first-child {
+  width: 4.8rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+#content .md-cols-8.md-table-matrix th:nth-child(2),
+#content .md-cols-8.md-table-matrix td:nth-child(2),
+#content .md-cols-11.md-table-matrix th:nth-child(2),
+#content .md-cols-11.md-table-matrix td:nth-child(2) {
+  width: auto;
+  font-weight: 400;
+  background: transparent;
+}
+
+#content .md-cols-8 th,
+#content .md-cols-8 td,
+#content .md-cols-11 th,
+#content .md-cols-11 td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.32rem 0.18rem;
+}
+
+#content .md-cols-11 {
+  font-size: 0.84rem;
+}
+
 #content hr {
   border: none;
   border-top: 1px solid var(--border);
