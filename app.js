@@ -1,6 +1,6 @@
 const els = {
   coverScreen: document.getElementById("cover-screen"),
-  coverEnter: document.getElementById("cover-enter"),
+  shelfBooks: document.querySelectorAll(".shelf-book"),
   coverHome: document.getElementById("cover-home"),
   pageMetas: document.querySelectorAll(".page-meta"),
   pageTitle: document.getElementById("page-title"),
@@ -15,9 +15,18 @@ const state = {
   pages: [],
   index: 0,
   tocQuery: "",
+  volume: "",
+  bookTitle: "Яков Фельдман",
 };
 
-const BOOK_TITLE = "Теория уровней и модель человека";
+const VOLUMES = {
+  2005: { title: "Теория уровней и модель человека", manifest: "pages.json" },
+  album: { title: "Альбом. Том 1. Инструментарий", manifest: "album/pages.json" },
+  beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
+  later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
+};
+
+let searchGen = 0;
 
 function titleFromMd(path) {
   return path
@@ -42,7 +51,7 @@ function escapeAttr(text) {
 function renderInline(text) {
   let html = escapeHtml(text);
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
-    const cls = src.includes("pict/") ? "md-pict" : "md-fig";
+    const cls = src.includes("pict/") ? "md-pict" : /(?:^|\/)page\//.test(src) ? "md-page" : "md-fig";
     return `<img class="${cls}" src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`;
   });
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
@@ -231,7 +240,7 @@ function showCover() {
   document.body.classList.remove("view-part");
   els.coverScreen.classList.remove("cover-hidden");
   els.coverScreen.setAttribute("aria-hidden", "false");
-  document.title = BOOK_TITLE;
+  document.title = "Яков Фельдман";
   history.replaceState(null, "", location.pathname + location.search);
 }
 
@@ -314,10 +323,12 @@ async function indexPageText(page) {
 }
 
 async function indexBookSearch() {
+  const gen = ++searchGen;
   const queue = state.pages.filter((page) => page.md || page.comment);
   for (let i = 0; i < queue.length; i += 6) {
+    if (gen !== searchGen) return;
     await Promise.all(queue.slice(i, i + 6).map(indexPageText));
-    if (isTocView()) applyTocFilter();
+    if (gen === searchGen && isTocView()) applyTocFilter();
   }
 }
 
@@ -443,8 +454,8 @@ function showToc() {
   document.body.classList.add("view-toc");
   setMeta("Оглавление");
   els.pageTitle.textContent = "Оглавление";
-  document.title = `Оглавление — ${BOOK_TITLE}`;
-  history.replaceState(null, "", `${location.pathname}${location.search}#toc`);
+  document.title = `Оглавление — ${state.bookTitle}`;
+  history.replaceState(null, "", `${location.pathname}${location.search}#${volumeHash("toc")}`);
   syncNav();
   els.content.innerHTML = renderTocPage();
   bindTocPageClicks();
@@ -458,8 +469,8 @@ async function openPage(index) {
   hideCover();
   document.body.classList.remove("view-toc");
   document.body.classList.toggle("view-part", page.kind === "part");
-  document.title = `${page.title} — ${BOOK_TITLE}`;
-  history.replaceState(null, "", `${location.pathname}${location.search}#${page.id}`);
+  document.title = `${page.title} — ${state.bookTitle}`;
+  history.replaceState(null, "", `${location.pathname}${location.search}#${volumeHash(page.id)}`);
   syncNav();
   if (page.kind === "part") {
     setMeta("");
@@ -514,20 +525,61 @@ function goNext() {
   if (state.index < state.pages.length - 1) openPage(state.index + 1);
 }
 
-async function boot() {
-  const manifest = await fetch(`pages.json?v=${Date.now()}`, { cache: "no-store" }).then((r) => r.json());
+function volumeHash(page) {
+  if (!state.volume || state.volume === "2005") return page;
+  return `${state.volume}/${page}`;
+}
+
+async function ensureVolume(id) {
+  const vol = VOLUMES[id];
+  if (!vol) return false;
+  if (state.volume === id && state.pages.length) return true;
+  const manifest = await fetch(`${vol.manifest}?v=${Date.now()}`, { cache: "no-store" }).then((r) => r.json());
+  state.volume = id;
+  state.bookTitle = manifest.title || vol.title;
   state.pages = (manifest.pages || []).map((page) => ({
     ...page,
     title: page.title || titleFromMd(page.md),
   }));
+  state.index = 0;
+  state.tocQuery = "";
   seedSearchText();
   indexBookSearch();
-  els.coverEnter.addEventListener("click", showToc);
-  els.coverEnter.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      showToc();
-    }
+  return true;
+}
+
+function parseLocation() {
+  const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
+  if (!hash) return null;
+  const slash = hash.indexOf("/");
+  if (slash > 0) return { volume: hash.slice(0, slash), page: hash.slice(slash + 1) || "toc" };
+  return { volume: "2005", page: hash };
+}
+
+async function route() {
+  const target = parseLocation();
+  if (!target || !VOLUMES[target.volume]) {
+    showCover();
+    return;
+  }
+  await ensureVolume(target.volume);
+  if (target.page === "toc") {
+    showToc();
+    return;
+  }
+  const fromHash = state.pages.findIndex((p) => p.id === target.page);
+  if (fromHash >= 0) openPage(fromHash);
+  else showToc();
+}
+
+async function openVolume(id) {
+  const ok = await ensureVolume(id);
+  if (ok) showToc();
+}
+
+async function boot() {
+  els.shelfBooks.forEach((button) => {
+    button.addEventListener("click", () => openVolume(button.dataset.volume));
   });
   els.coverHome.addEventListener("click", showCover);
   els.pagePrevs.forEach((el) => el.addEventListener("click", goPrev));
@@ -540,18 +592,10 @@ async function boot() {
     if (e.code === "ArrowLeft") goPrev();
     if (e.code === "ArrowRight") goNext();
   });
-  window.addEventListener("hashchange", applyHash);
-  applyHash();
-}
-
-function applyHash() {
-  const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
-  if (hash === "toc") {
-    showToc();
-    return;
-  }
-  const fromHash = state.pages.findIndex((p) => p.id === hash);
-  if (fromHash >= 0) openPage(fromHash);
+  window.addEventListener("hashchange", () => {
+    route();
+  });
+  await route();
 }
 
 boot();

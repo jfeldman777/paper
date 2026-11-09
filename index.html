@@ -3,26 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Теория уровней и модель человека</title>
-  <link rel="stylesheet" href="style.css?v=20">
+  <title>Яков Фельдман</title>
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body class="cover-open">
   <div id="cover-screen" aria-hidden="false">
-    <button type="button" id="cover-enter" class="cover-image-btn" title="Открыть книгу" aria-label="Открыть книгу">
-      <span class="cover-text">
-        <span class="cover-author">Яков Фельдман</span>
-        <span class="cover-line">Теория уровней</span>
-        <span class="cover-line cover-line-small">и модель человека</span>
-        <span class="cover-year">2005</span>
-      </span>
-    </button>
+    <div class="shelf">
+      <p class="cover-author">Яков Фельдман</p>
+      <button type="button" class="shelf-book" data-volume="2005">
+        <strong>Теория уровней и модель человека</strong>
+        <span>2005</span>
+      </button>
+      <button type="button" class="shelf-book" data-volume="album">
+        <strong>Альбом. Том 1</strong>
+        <span>Инструментарий</span>
+      </button>
+      <button type="button" class="shelf-book" data-volume="beach">
+        <strong>Философ на пляже</strong>
+        <span>2008</span>
+      </button>
+      <button type="button" class="shelf-book" data-volume="later">
+        <strong>Философ 20 лет спустя</strong>
+        <span>2026</span>
+      </button>
+    </div>
   </div>
 
   <main id="main">
     <article id="reader">
       <button type="button" id="cover-home" title="К обложке" aria-label="К обложке">
-        <span class="cover-home-title">Теория уровней</span>
-        <span class="cover-home-hint">обложка</span>
+        <span class="cover-home-title">Полка</span>
+        <span class="cover-home-hint">книги</span>
       </button>
       <div class="page-nav">
         <button type="button" class="page-prev" title="Предыдущая глава" aria-label="Предыдущая глава">←</button>
@@ -40,6 +51,6 @@
       </div>
     </article>
   </main>
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>

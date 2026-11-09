@@ -33,6 +33,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem 1.5rem;
+  overflow: auto;
   background-color: #c9a63f;
   background-image:
     linear-gradient(180deg, rgba(255, 248, 220, 0.14), rgba(120, 90, 20, 0.12)),
@@ -98,6 +99,48 @@ body {
   font-size: clamp(1.1rem, 3vw, 1.6rem);
   font-style: italic;
   opacity: 0.85;
+}
+
+.shelf {
+  width: min(34rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.shelf .cover-author {
+  margin: 0 0 0.4rem;
+  text-align: center;
+}
+
+.shelf-book {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.85rem 1.05rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: rgba(255, 253, 248, 0.94);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(90, 70, 20, 0.16);
+}
+
+.shelf-book:hover {
+  background: #fff;
+}
+
+.shelf-book strong {
+  font-size: 1.22rem;
+  font-weight: 600;
+}
+
+.shelf-book span {
+  color: var(--muted);
+  font-size: 0.98rem;
 }
 
 #main {
@@ -444,11 +487,23 @@ body.view-part #content {
   text-align: center;
 }
 
+#content:has(img.md-page) {
+  max-width: min(100%, 56rem);
+}
+
 #content img.md-fig {
   display: block;
   max-width: min(100%, 36rem);
   height: auto;
   margin: 0.9rem auto 1.15rem;
+}
+
+#content img.md-page {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 1rem;
 }
 
 #content img.md-pict {
