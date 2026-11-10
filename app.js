@@ -9,6 +9,9 @@ const els = {
   tocTop: document.getElementById("toc-top"),
   tocBottom: document.getElementById("toc-bottom"),
   content: document.getElementById("content"),
+  listen: document.getElementById("listen"),
+  listenBtn: document.getElementById("listen-btn"),
+  listenParts: document.getElementById("listen-parts"),
 };
 
 const state = {
@@ -22,6 +25,7 @@ const state = {
 const VOLUMES = {
   2005: { title: "Теория уровней и модель человека", manifest: "pages.json" },
   album: { title: "Альбом. Том 1. Инструментарий", manifest: "album/pages.json" },
+  m678: { title: "М678", manifest: "m678/pages.json" },
   anthro: { title: "Антропология для инопланетян", manifest: "anthro/pages.json" },
   beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
@@ -236,6 +240,7 @@ function hideCover() {
 }
 
 function showCover() {
+  stopListen();
   document.body.classList.add("cover-open");
   document.body.classList.remove("view-toc");
   document.body.classList.remove("view-part");
@@ -370,7 +375,7 @@ function renderTocPage() {
       return;
     }
     parts.push(
-      `<button type="button" class="toc-page-item toc-row" data-index="${index}"><span class="num">${escapeHtml(page.id)}</span><span class="title">${escapeHtml(page.title)}</span></button>`,
+      `<button type="button" class="toc-page-item toc-row" data-index="${index}"><span class="num">${escapeHtml(page.id)}</span><span class="title">${escapeHtml(page.title)}</span>${pageAudio(page).length ? `<span class="audio-dot" title="Есть запись"></span>` : ""}</button>`,
     );
   });
   return `<div class="toc-page">${parts.join("")}</div>`;
@@ -450,6 +455,7 @@ function bindTocPageClicks() {
 }
 
 function showToc() {
+  stopListen();
   hideCover();
   document.body.classList.remove("view-part");
   document.body.classList.add("view-toc");
@@ -474,6 +480,7 @@ async function openPage(index) {
   history.replaceState(null, "", `${location.pathname}${location.search}#${volumeHash(page.id)}`);
   syncNav();
   if (page.kind === "part") {
+    stopListen();
     setMeta("");
     els.pageTitle.textContent = "";
     const sub = page.subtitle
@@ -486,6 +493,7 @@ async function openPage(index) {
   }
   setMeta(`${page.id} / ${bookLen()}`);
   els.pageTitle.textContent = page.title;
+  showListen(page);
   els.content.innerHTML = "<p>…</p>";
   try {
     const text = await fetchText(encodeURI(page.md));
@@ -578,6 +586,132 @@ async function openVolume(id) {
   if (ok) showToc();
 }
 
+let listenGen = 0;
+let listenPart = 0;
+let ytPlayer = null;
+let ytReady = null;
+
+function pageAudio(page) {
+  const audio = page && page.audio;
+  if (!audio) return [];
+  return (Array.isArray(audio) ? audio : [audio]).filter(Boolean);
+}
+
+function resetListenHost() {
+  if (!els.listen) return;
+  document.getElementById("listen-host")?.remove();
+  const host = document.createElement("div");
+  host.id = "listen-host";
+  els.listen.appendChild(host);
+}
+
+function stopListen() {
+  listenGen += 1;
+  listenPart = 0;
+  if (ytPlayer && typeof ytPlayer.destroy === "function") {
+    try {
+      ytPlayer.destroy();
+    } catch {
+      /* the player node is already gone */
+    }
+  }
+  ytPlayer = null;
+  if (!els.listen) return;
+  els.listen.hidden = true;
+  els.listen.dataset.ids = "";
+  if (els.listenParts) els.listenParts.innerHTML = "";
+  if (els.listenBtn) els.listenBtn.textContent = "Слушать";
+  resetListenHost();
+}
+
+function showListen(page) {
+  stopListen();
+  const ids = pageAudio(page);
+  if (!ids.length || !els.listen) return;
+  els.listen.hidden = false;
+  els.listen.dataset.ids = ids.join(",");
+  els.listenBtn.textContent = "Слушать";
+  if (ids.length > 1) {
+    els.listenParts.innerHTML = ids
+      .map((_, i) => `<button type="button" class="listen-part" data-part="${i}">${i + 1}</button>`)
+      .join("");
+  }
+}
+
+function loadYouTubeApi() {
+  if (window.YT && window.YT.Player) return Promise.resolve();
+  if (ytReady) return ytReady;
+  ytReady = new Promise((resolve) => {
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previous === "function") previous();
+      resolve();
+    };
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(script);
+  });
+  return ytReady;
+}
+
+function markListenPart(part) {
+  listenPart = part;
+  els.listenParts.querySelectorAll(".listen-part").forEach((btn) => {
+    btn.classList.toggle("is-current", Number(btn.dataset.part) === part);
+  });
+}
+
+function onListenState(event, gen) {
+  if (gen !== listenGen || !window.YT) return;
+  if (event.data === YT.PlayerState.PLAYING) els.listenBtn.textContent = "Пауза";
+  if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.CUED) {
+    els.listenBtn.textContent = "Слушать";
+  }
+  if (event.data === YT.PlayerState.ENDED) {
+    const ids = (els.listen.dataset.ids || "").split(",").filter(Boolean);
+    if (listenPart + 1 < ids.length) playListen(listenPart + 1);
+    else els.listenBtn.textContent = "Слушать";
+  }
+}
+
+async function playListen(part) {
+  const ids = (els.listen.dataset.ids || "").split(",").filter(Boolean);
+  if (!ids[part]) return;
+  const gen = listenGen;
+  markListenPart(part);
+  await loadYouTubeApi();
+  if (gen !== listenGen) return;
+  if (!ytPlayer) {
+    resetListenHost();
+    ytPlayer = new YT.Player("listen-host", {
+      videoId: ids[part],
+      width: "448",
+      height: "252",
+      playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1 },
+      events: { onStateChange: (event) => onListenState(event, gen) },
+    });
+  } else {
+    ytPlayer.loadVideoById(ids[part]);
+  }
+}
+
+function toggleListen() {
+  if (!ytPlayer || typeof ytPlayer.getPlayerState !== "function") {
+    playListen(listenPart || 0);
+    return;
+  }
+  const code = ytPlayer.getPlayerState();
+  if (code === YT.PlayerState.PLAYING) {
+    ytPlayer.pauseVideo();
+    return;
+  }
+  if (code === YT.PlayerState.PAUSED) {
+    ytPlayer.playVideo();
+    return;
+  }
+  playListen(listenPart || 0);
+}
+
 async function boot() {
   els.shelfBooks.forEach((button) => {
     button.addEventListener("click", () => openVolume(button.dataset.volume));
@@ -587,6 +721,12 @@ async function boot() {
   els.pageNexts.forEach((el) => el.addEventListener("click", goNext));
   els.tocTop.addEventListener("click", showToc);
   els.tocBottom.addEventListener("click", showToc);
+  els.listenBtn?.addEventListener("click", toggleListen);
+  els.listenParts?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".listen-part");
+    if (!btn) return;
+    playListen(Number(btn.dataset.part));
+  });
   document.addEventListener("keydown", (e) => {
     if (document.body.classList.contains("cover-open")) return;
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

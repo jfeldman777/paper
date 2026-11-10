@@ -850,3 +850,62 @@ body.view-part #content {
     padding: 1.15rem 1.25rem 2.5rem;
   }
 }
+
+#listen {
+  margin: 0 0 1.25rem;
+}
+
+.listen-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#listen-btn,
+.listen-part {
+  border: 1px solid var(--line, #d9d0c4);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  border-radius: 999px;
+  padding: 0.28rem 0.8rem;
+  cursor: pointer;
+}
+
+#listen-btn {
+  background: var(--accent-soft, #f3ece2);
+}
+
+.listen-part.is-current {
+  background: var(--accent-soft, #f3ece2);
+  font-weight: 600;
+}
+
+#listen-host {
+  max-width: 28rem;
+  margin-top: 0.75rem;
+}
+
+#listen-host:empty {
+  display: none;
+  margin-top: 0;
+}
+
+iframe#listen-host {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 0.35rem;
+}
+
+.toc-page-item .audio-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #3d8b5f;
+  align-self: center;
+  flex-shrink: 0;
+}
