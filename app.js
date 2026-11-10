@@ -22,6 +22,7 @@ const state = {
 const VOLUMES = {
   2005: { title: "Теория уровней и модель человека", manifest: "pages.json" },
   album: { title: "Альбом. Том 1. Инструментарий", manifest: "album/pages.json" },
+  anthro: { title: "Антропология для инопланетян", manifest: "anthro/pages.json" },
   beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
 };
