@@ -31,6 +31,7 @@ const VOLUMES = {
   kino: { title: "Кино и уровни. Общая теория человека", manifest: "kino/pages.json" },
   kino2: { title: "Кино и уровни — 2. Последняя надежда", manifest: "kino2/pages.json" },
   kino3: { title: "Кино и уровни — 3. Люди и ангелы", manifest: "kino3/pages.json" },
+  plus: { title: "Философия++", manifest: "plus/pages.json" },
   anthro: { title: "Антропология для инопланетян", manifest: "anthro/pages.json" },
   beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
