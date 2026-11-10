@@ -30,9 +30,10 @@ body {
   inset: 0;
   z-index: 3000;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem 1.5rem;
+  justify-content: flex-start;
+  padding: 1.25rem 1.5rem;
   overflow: auto;
   background-color: #c9a63f;
   background-image:
@@ -103,6 +104,9 @@ body {
 
 .shelf {
   width: min(34rem, 100%);
+  margin-top: auto;
+  margin-bottom: auto;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
