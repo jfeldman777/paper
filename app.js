@@ -1,6 +1,6 @@
 const els = {
   coverScreen: document.getElementById("cover-screen"),
-  shelfBooks: document.querySelectorAll(".shelf-book"),
+  shelfBooks: document.querySelectorAll(".shelf-book[data-volume]"),
   coverHome: document.getElementById("cover-home"),
   pageMetas: document.querySelectorAll(".page-meta"),
   pageTitle: document.getElementById("page-title"),

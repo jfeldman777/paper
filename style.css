@@ -143,6 +143,38 @@ body {
   font-size: 0.98rem;
 }
 
+a.shelf-book {
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.shelf-hubs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.85rem;
+  margin-top: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.35rem;
+  background: rgba(255, 253, 248, 0.94);
+  box-shadow: 0 8px 24px rgba(90, 70, 20, 0.16);
+}
+
+.shelf-hubs a,
+.shelf-hubs span {
+  color: #3a2e18;
+  font-size: 0.98rem;
+  text-decoration: none;
+}
+
+.shelf-hubs a:hover {
+  text-decoration: underline;
+}
+
+.shelf-hubs span[aria-current] {
+  font-weight: 700;
+}
+
 #main {
   flex: 1;
   display: flex;
