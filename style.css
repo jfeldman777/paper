@@ -534,6 +534,32 @@ body.view-part #content {
   margin: 0.9rem auto 1.15rem;
 }
 
+#content .md-video {
+  margin: 1.4rem 0 1.6rem;
+}
+
+#content .md-video video,
+#content .md-video iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: #1a140c;
+  border: 0;
+  border-radius: 0.35rem;
+}
+
+#content .md-video-short iframe {
+  width: min(100%, 20rem);
+  aspect-ratio: 9 / 16;
+}
+
+#content .md-video figcaption {
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 #content img.md-page {
   display: block;
   width: 100%;

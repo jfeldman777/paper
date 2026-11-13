@@ -35,6 +35,7 @@ const VOLUMES = {
   anthro: { title: "Антропология для инопланетян", manifest: "anthro/pages.json" },
   beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
+  dnevnik: { title: "Дневник", manifest: "dnevnik/pages.json" },
 };
 
 let searchGen = 0;
@@ -166,6 +167,25 @@ function renderMarkdown(src) {
       i += 1;
       continue;
     }
+    const video = line.match(/^!video\[([^\]]*)\]\(([^)]+)\)$/);
+    if (video) {
+      const caption = video[1] ? `<figcaption>${renderInline(video[1])}</figcaption>` : "";
+      const youtube = video[2].match(
+        /(?:youtube\.com\/(?:shorts\/|embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})/
+      );
+      if (youtube) {
+        const title = escapeAttr(video[1] || "Видео");
+        parts.push(
+          `<figure class="md-video md-video-short"><iframe src="https://www.youtube.com/embed/${youtube[1]}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>${caption}</figure>`
+        );
+      } else {
+        parts.push(
+          `<figure class="md-video"><video controls playsinline preload="metadata" src="${escapeAttr(video[2])}"></video>${caption}</figure>`
+        );
+      }
+      i += 1;
+      continue;
+    }
     if (line.startsWith("## ")) {
       parts.push(`<h2>${renderInline(line.slice(3))}</h2>`);
       i += 1;
@@ -226,6 +246,7 @@ function renderMarkdown(src) {
         next.startsWith("#") ||
         next.startsWith(">") ||
         next.startsWith("|") ||
+        next.startsWith("!video[") ||
         /^[-*]\s+/.test(next) ||
         /^\d+\.\s+/.test(next)
       ) {
