@@ -37,6 +37,7 @@ const VOLUMES = {
   beach: { title: "Философ на пляже", manifest: "beach/pages.json" },
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
   dnevnik: { title: "Дневник", manifest: "dnevnik/pages.json" },
+  uchebnik: { title: "Учебник к Атласу", manifest: "uchebnik/pages.json" },
 };
 
 let searchGen = 0;
