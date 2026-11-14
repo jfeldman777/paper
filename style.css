@@ -573,6 +573,13 @@ body.view-part #content {
   background: rgba(44, 36, 22, 0.04);
 }
 
+#content .md-table-pairs th:first-child,
+#content .md-table-pairs td:first-child {
+  width: 42%;
+  font-weight: 600;
+  background: rgba(44, 36, 22, 0.04);
+}
+
 #content .md-table-compare th:first-child,
 #content .md-table-compare td:first-child {
   width: 2.6rem;
@@ -638,6 +645,7 @@ body.view-part #content {
   width: 100%;
   max-width: 100%;
   height: auto;
+  aspect-ratio: 16 / 9;
   background: #1a140c;
   border: 0;
   border-radius: 0.35rem;

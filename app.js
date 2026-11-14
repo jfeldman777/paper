@@ -99,9 +99,12 @@ function renderTable(rows) {
   if (!parsed.length) return "";
   const head = parsed[0];
   const first = head[0].trim();
+  const firstColWide = parsed.some((row) => (row[0] || "").trim().length > 4);
   const kind =
     head.length <= 2
-      ? "md-table-list"
+      ? firstColWide
+        ? "md-table-pairs"
+        : "md-table-list"
       : head.length === 3
         ? first === "№" || first.length <= 2
           ? "md-table-compare"
@@ -176,8 +179,9 @@ function renderMarkdown(src) {
       );
       if (youtube) {
         const title = escapeAttr(video[1] || "Видео");
+        const short = /youtube\.com\/shorts\//.test(video[2]);
         parts.push(
-          `<figure class="md-video md-video-short"><iframe src="https://www.youtube.com/embed/${youtube[1]}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>${caption}</figure>`
+          `<figure class="md-video${short ? " md-video-short" : ""}"><iframe src="https://www.youtube.com/embed/${youtube[1]}" title="${title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>${caption}</figure>`
         );
       } else {
         parts.push(
