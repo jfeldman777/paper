@@ -315,6 +315,100 @@ body.view-part #page-title {
   display: none;
 }
 
+body.view-book-cover #reader {
+  display: flex;
+  flex-direction: column;
+  background-color: #c9a63f;
+  background-image:
+    linear-gradient(180deg, rgba(255, 248, 220, 0.14), rgba(120, 90, 20, 0.12)),
+    url("cover-puzzle.svg");
+  background-size: auto, 140px 140px;
+  background-repeat: no-repeat, repeat;
+}
+
+body.view-book-cover #cover-home,
+body.view-book-cover .page-nav,
+body.view-book-cover #page-title,
+body.view-book-cover #listen {
+  display: none;
+}
+
+body.view-book-cover #content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  margin: 0;
+}
+
+.book-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #5a4d63;
+  padding: 1.5rem;
+}
+
+.book-cover-author {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+.book-cover-title {
+  margin: 0.35rem 0 0;
+  max-width: 18em;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.book-cover-year {
+  margin: 0.45rem 0 0;
+  font-size: 1.05rem;
+}
+
+.book-cover-open {
+  margin-top: 1.35rem;
+  border: none;
+  background: transparent;
+  color: #5a4d63;
+  font: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.book-cover-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.4rem;
+  margin-top: 1.5rem;
+}
+
+.book-cover-links button,
+.book-cover-links a {
+  border: none;
+  background: rgba(255, 252, 245, 0.88);
+  color: #5a4d63;
+  font: inherit;
+  font-size: 1rem;
+  text-decoration: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.book-cover-links button:hover,
+.book-cover-links a:hover {
+  background: #fffdf8;
+}
+
 body.view-part #content {
   flex: 1;
   display: flex;

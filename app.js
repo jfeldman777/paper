@@ -20,6 +20,7 @@ const state = {
   tocQuery: "",
   volume: "",
   bookTitle: "Яков Фельдман",
+  bookYear: "",
 };
 
 const VOLUMES = {
@@ -271,6 +272,7 @@ function showCover() {
   document.body.classList.add("cover-open");
   document.body.classList.remove("view-toc");
   document.body.classList.remove("view-part");
+  document.body.classList.remove("view-book-cover");
   els.coverScreen.classList.remove("cover-hidden");
   els.coverScreen.setAttribute("aria-hidden", "false");
   document.title = "Яков Фельдман";
@@ -451,7 +453,7 @@ function firstVisibleTocPageIndex() {
 }
 
 function bindTocPageClicks() {
-  els.content.querySelector(".toc-page-cover-link")?.addEventListener("click", showCover);
+  els.content.querySelector(".toc-page-cover-link")?.addEventListener("click", showBookCover);
   els.content.querySelectorAll(".toc-page-item, .toc-part").forEach((btn) => {
     btn.addEventListener("click", () => {
       const index = Number(btn.dataset.index);
@@ -481,10 +483,44 @@ function bindTocPageClicks() {
   queueMicrotask(() => input.focus());
 }
 
+const LANDING = "https://jfeldman777.github.io/books/";
+
+function showBookCover() {
+  if (!state.volume) {
+    showCover();
+    return;
+  }
+  stopListen();
+  hideCover();
+  document.body.classList.remove("view-toc");
+  document.body.classList.remove("view-part");
+  document.body.classList.add("view-book-cover");
+  const year = state.bookYear ? `<p class="book-cover-year">${escapeHtml(state.bookYear)}</p>` : "";
+  setMeta("");
+  els.pageTitle.textContent = "";
+  document.title = state.bookTitle;
+  history.replaceState(null, "", `${location.pathname}${location.search}#${volumeHash("cover")}`);
+  syncNav();
+  els.content.innerHTML = `<div class="book-cover">
+    <p class="book-cover-author">Яков Фельдман</p>
+    <h2 class="book-cover-title">${escapeHtml(state.bookTitle)}</h2>
+    ${year}
+    <button type="button" class="book-cover-open">К оглавлению</button>
+    <nav class="book-cover-links" aria-label="Куда дальше">
+      <button type="button" class="book-cover-shelf">Книжная полка</button>
+      <a href="${LANDING}">Лендинг</a>
+    </nav>
+  </div>`;
+  els.content.querySelector(".book-cover-open").addEventListener("click", showToc);
+  els.content.querySelector(".book-cover-shelf").addEventListener("click", showCover);
+  document.getElementById("reader").scrollTop = 0;
+}
+
 function showToc() {
   stopListen();
   hideCover();
   document.body.classList.remove("view-part");
+  document.body.classList.remove("view-book-cover");
   document.body.classList.add("view-toc");
   setMeta("Оглавление");
   els.pageTitle.textContent = "Оглавление";
@@ -502,6 +538,7 @@ async function openPage(index) {
   state.index = index;
   hideCover();
   document.body.classList.remove("view-toc");
+  document.body.classList.remove("view-book-cover");
   document.body.classList.toggle("view-part", page.kind === "part");
   document.title = `${page.title} — ${state.bookTitle}`;
   history.replaceState(null, "", `${location.pathname}${location.search}#${volumeHash(page.id)}`);
@@ -543,7 +580,7 @@ async function openPage(index) {
 
 function goPrev() {
   if (isTocView()) {
-    showCover();
+    showBookCover();
     return;
   }
   if (state.index <= 0) {
@@ -573,6 +610,7 @@ async function ensureVolume(id) {
   const manifest = await fetch(`${vol.manifest}?v=${Date.now()}`, { cache: "no-store" }).then((r) => r.json());
   state.volume = id;
   state.bookTitle = manifest.title || vol.title;
+  state.bookYear = manifest.year || "";
   state.pages = (manifest.pages || []).map((page) => ({
     ...page,
     title: page.title || titleFromMd(page.md),
@@ -599,6 +637,10 @@ async function route() {
     return;
   }
   await ensureVolume(target.volume);
+  if (target.page === "cover") {
+    showBookCover();
+    return;
+  }
   if (target.page === "toc") {
     showToc();
     return;
@@ -610,7 +652,7 @@ async function route() {
 
 async function openVolume(id) {
   const ok = await ensureVolume(id);
-  if (ok) showToc();
+  if (ok) showBookCover();
 }
 
 let listenGen = 0;
@@ -743,7 +785,10 @@ async function boot() {
   els.shelfBooks.forEach((button) => {
     button.addEventListener("click", () => openVolume(button.dataset.volume));
   });
-  els.coverHome.addEventListener("click", showCover);
+  els.coverHome.addEventListener("click", () => {
+    if (state.volume) showBookCover();
+    else showCover();
+  });
   els.pagePrevs.forEach((el) => el.addEventListener("click", goPrev));
   els.pageNexts.forEach((el) => el.addEventListener("click", goNext));
   els.tocTop.addEventListener("click", showToc);
