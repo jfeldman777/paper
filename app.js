@@ -40,6 +40,7 @@ const VOLUMES = {
   later: { title: "Философ 20 лет спустя", manifest: "later/pages.json" },
   dnevnik: { title: "Дневник", manifest: "dnevnik/pages.json" },
   uchebnik: { title: "Учебник к Атласу", manifest: "uchebnik/pages.json" },
+  canon: { title: "Канон", manifest: "canon/pages.json" },
 };
 
 let searchGen = 0;
@@ -191,6 +192,11 @@ function renderMarkdown(src) {
           `<figure class="md-video"><video controls playsinline preload="metadata" src="${escapeAttr(video[2])}"></video>${caption}</figure>`
         );
       }
+      i += 1;
+      continue;
+    }
+    if (line.startsWith("### ")) {
+      parts.push(`<h3>${renderInline(line.slice(4))}</h3>`);
       i += 1;
       continue;
     }
