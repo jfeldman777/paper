@@ -179,6 +179,127 @@ a.shelf-book {
   font-weight: 700;
 }
 
+.shelf-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0.35rem;
+  z-index: 2;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem;
+  background: rgba(255, 253, 248, 0.97);
+  box-shadow: 0 8px 24px rgba(90, 70, 20, 0.16);
+}
+
+.shelf-search:focus-within {
+  background: #fff;
+}
+
+.shelf-search .search-loupe {
+  display: flex;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+#shelf-search {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.05rem;
+  outline: none;
+}
+
+#shelf-search::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+#cover-screen.shelf-searching .shelf-book,
+#cover-screen.shelf-searching .shelf-hubs {
+  display: none;
+}
+
+#shelf-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#shelf-results[hidden] {
+  display: none !important;
+}
+
+.shelf-results-status {
+  margin: 0;
+  padding: 0.1rem 0.15rem 0.15rem;
+  color: #3a2e18;
+  font-size: 0.95rem;
+}
+
+.shelf-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.shelf-hit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+  width: 100%;
+  padding: 0.75rem 1.05rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: rgba(255, 253, 248, 0.94);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(90, 70, 20, 0.16);
+}
+
+.shelf-hit:hover,
+.shelf-hit:focus-visible {
+  background: #fff;
+  outline: none;
+}
+
+.shelf-hit-book {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.shelf-hit-title {
+  font-size: 1.08rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.shelf-hit-id {
+  margin-right: 0.4rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.shelf-hit-snip {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #4a4032;
+}
+
+.shelf-hit mark {
+  background: #f3df9a;
+  color: inherit;
+  border-radius: 0.12em;
+  padding: 0 0.08em;
+}
+
 #main {
   flex: 1;
   display: flex;

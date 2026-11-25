@@ -1,6 +1,8 @@
 const els = {
   coverScreen: document.getElementById("cover-screen"),
   shelfBooks: document.querySelectorAll(".shelf-book[data-volume]"),
+  shelfSearch: document.getElementById("shelf-search"),
+  shelfResults: document.getElementById("shelf-results"),
   coverHome: document.getElementById("cover-home"),
   pageMetas: document.querySelectorAll(".page-meta"),
   pageTitle: document.getElementById("page-title"),
@@ -370,6 +372,324 @@ async function indexBookSearch() {
     await Promise.all(queue.slice(i, i + 6).map(indexPageText));
     if (gen === searchGen && isTocView()) applyTocFilter();
   }
+}
+
+const library = {
+  books: [],
+  pages: [],
+  done: 0,
+  total: 0,
+};
+
+let libraryPromise = null;
+let shelfListKey = "";
+const SHELF_HITS_LIMIT = 40;
+
+function volumeIds() {
+  const fromShelf = [...document.querySelectorAll(".shelf-book[data-volume]")].map((el) => el.dataset.volume);
+  const rest = Object.keys(VOLUMES).filter((id) => !fromShelf.includes(id));
+  return [...fromShelf, ...rest];
+}
+
+function shelfMeta(id) {
+  const el = document.querySelector(`.shelf-book[data-volume="${id}"]`);
+  return {
+    title: el?.querySelector("strong")?.textContent.trim() || VOLUMES[id].title,
+    year: el?.querySelector("span")?.textContent.trim() || "",
+  };
+}
+
+function normalizeQuery(raw) {
+  return foldSearch(raw).replace(/\s+/g, " ").trim();
+}
+
+function plainFromMd(src) {
+  return String(src || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^[-*]\s+/gm, "")
+    .replace(/[*_`>#|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function makeSnippet(plain, at, qlen) {
+  const radius = 72;
+  let start = Math.max(0, at - radius);
+  let end = Math.min(plain.length, at + qlen + radius);
+  if (start > 0) {
+    const space = plain.indexOf(" ", start);
+    if (space !== -1 && space < at) start = space + 1;
+  }
+  if (end < plain.length) {
+    const space = plain.lastIndexOf(" ", end);
+    if (space > at + qlen) end = space;
+  }
+  const pre = start > 0 ? "… " : "";
+  const post = end < plain.length ? " …" : "";
+  return `${pre}${escapeHtml(plain.slice(start, at))}<mark>${escapeHtml(plain.slice(at, at + qlen))}</mark>${escapeHtml(plain.slice(at + qlen, end))}${post}`;
+}
+
+function matchAt(folded, query) {
+  let from = 0;
+  while (from < folded.length) {
+    const at = folded.indexOf(query, from);
+    if (at < 0) return -1;
+    const prev = at === 0 ? "" : folded[at - 1];
+    if (!prev || !/[a-zа-я0-9]/.test(prev)) return at;
+    from = at + 1;
+  }
+  return -1;
+}
+
+function highlightText(text, query) {
+  const at = matchAt(foldSearch(text), query);
+  if (at < 0) return escapeHtml(text);
+  return `${escapeHtml(text.slice(0, at))}<mark>${escapeHtml(text.slice(at, at + query.length))}</mark>${escapeHtml(text.slice(at + query.length))}`;
+}
+
+function countLabel(n) {
+  const n10 = n % 10;
+  const n100 = n % 100;
+  let word = "совпадений";
+  if (n10 === 1 && n100 !== 11) word = "совпадение";
+  else if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) word = "совпадения";
+  return `${n} ${word}`;
+}
+
+async function readOptional(url) {
+  if (!url) return "";
+  try {
+    return await fetchText(encodeURI(url));
+  } catch {
+    return "";
+  }
+}
+
+async function fetchManifests() {
+  const books = await Promise.all(
+    volumeIds().map(async (id) => {
+      const vol = VOLUMES[id];
+      const card = shelfMeta(id);
+      let manifestTitle = vol.title;
+      let pages = [];
+      try {
+        const res = await fetch(`${vol.manifest}?v=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const manifest = await res.json();
+        manifestTitle = manifest.title || vol.title;
+        pages = manifest.pages || [];
+        if (!card.year && manifest.year) card.year = String(manifest.year);
+      } catch {
+        pages = [];
+      }
+      return {
+        id,
+        title: card.title,
+        manifestTitle,
+        year: card.year,
+        foldedShelf: foldSearch(card.title).replace(/\s+/g, " "),
+        foldedTitle: foldSearch([card.title, manifestTitle].join("\n")).replace(/\s+/g, " "),
+        pages,
+      };
+    }),
+  );
+  library.books = books;
+  library.pages = [];
+  for (const book of books) {
+    for (const page of book.pages) {
+      const title = page.title || titleFromMd(page.md || "");
+      const subtitle = page.subtitle || "";
+      const item = {
+        volume: book.id,
+        bookTitle: book.title,
+        year: book.year,
+        id: String(page.id),
+        title,
+        subtitle,
+        md: page.md || "",
+        comment: page.comment || "",
+        foldedTitle: foldSearch([title, subtitle].filter(Boolean).join(" ")).replace(/\s+/g, " "),
+        plain: "",
+        folded: "",
+        ready: false,
+      };
+      if (!item.md && !item.comment) item.ready = true;
+      library.pages.push(item);
+    }
+  }
+  library.total = library.pages.length;
+  library.done = library.pages.filter((page) => page.ready).length;
+}
+
+function loadLibrary() {
+  if (!libraryPromise) {
+    libraryPromise = fetchManifests()
+      .then(() => {
+        renderShelfResults();
+        indexLibrary();
+      })
+      .catch((err) => {
+        libraryPromise = null;
+        throw err;
+      });
+  }
+  return libraryPromise;
+}
+
+async function indexLibrary() {
+  const queue = library.pages.filter((page) => !page.ready);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < queue.length) {
+      const page = queue[cursor];
+      cursor += 1;
+      try {
+        const [md, comment] = await Promise.all([readOptional(page.md), readOptional(page.comment)]);
+        page.plain = plainFromMd([md, comment].filter(Boolean).join("\n"));
+        page.folded = foldSearch(page.plain);
+      } finally {
+        page.ready = true;
+        library.done += 1;
+        const query = normalizeQuery(els.shelfSearch?.value || "");
+        const found = query.length >= 2 && page.folded && matchAt(page.folded, query) >= 0;
+        if (found || library.done % 40 === 0 || library.done === library.total) renderShelfResults();
+      }
+    }
+  }
+  const workers = Math.min(6, queue.length);
+  if (workers) await Promise.all(Array.from({ length: workers }, () => worker()));
+  renderShelfResults();
+}
+
+function collectShelfHits(query) {
+  const hits = [];
+  for (const book of library.books) {
+    if (matchAt(book.foldedTitle, query) < 0) continue;
+    const shelfHit = matchAt(book.foldedShelf, query) >= 0;
+    hits.push({
+      kind: "book",
+      volume: book.id,
+      year: book.year,
+      title: book.title,
+      titleHit: true,
+      snip: shelfHit ? "" : highlightText(book.manifestTitle, query),
+    });
+  }
+  for (const page of library.pages) {
+    const titleHit = matchAt(page.foldedTitle, query) >= 0;
+    let snip = "";
+    let bodyHit = false;
+    if (page.ready && page.folded) {
+      const at = matchAt(page.folded, query);
+      if (at >= 0) {
+        bodyHit = true;
+        snip = makeSnippet(page.plain, at, query.length);
+      }
+    }
+    if (!titleHit && !bodyHit) continue;
+    hits.push({
+      kind: "page",
+      volume: page.volume,
+      pageId: page.id,
+      bookTitle: page.bookTitle,
+      year: page.year,
+      title: page.title,
+      subtitle: page.subtitle,
+      titleHit,
+      snip,
+    });
+  }
+  hits.sort((a, b) => {
+    const rank = (hit) => (hit.kind === "book" ? 0 : hit.titleHit ? 1 : 2);
+    return rank(a) - rank(b);
+  });
+  return hits;
+}
+
+function shelfStatus(totalHits, pending) {
+  if (!library.books.length) return "Открываю оглавления…";
+  if (!totalHits && pending) return `В названиях нет. Читаю текст · ${library.done} из ${library.total}`;
+  if (!totalHits) return "Ничего не найдено";
+  const reading = pending ? ` · читаю текст ${library.done} из ${library.total}` : "";
+  return `${countLabel(totalHits)}${reading}`;
+}
+
+function renderShelfHit(hit, query) {
+  if (hit.kind === "book") {
+    const year = hit.year ? ` · ${escapeHtml(hit.year)}` : "";
+    const snip = hit.snip ? `<span class="shelf-hit-snip">${hit.snip}</span>` : "";
+    return `<button type="button" class="shelf-hit" data-kind="book" data-volume="${escapeAttr(hit.volume)}"><span class="shelf-hit-book">Книга${year}</span><span class="shelf-hit-title">${highlightText(hit.title, query)}</span>${snip}</button>`;
+  }
+  const where = `${escapeHtml(hit.bookTitle)}${hit.year ? ` · ${escapeHtml(hit.year)}` : ""}`;
+  const id = hit.subtitle
+    ? `<span class="shelf-hit-id">${escapeHtml(hit.subtitle)}</span>`
+    : hit.pageId
+      ? `<span class="shelf-hit-id">${escapeHtml(hit.pageId)}</span>`
+      : "";
+  const snip = hit.snip ? `<span class="shelf-hit-snip">${hit.snip}</span>` : "";
+  return `<button type="button" class="shelf-hit" data-kind="page" data-volume="${escapeAttr(hit.volume)}" data-page="${escapeAttr(hit.pageId)}"><span class="shelf-hit-book">${where}</span><span class="shelf-hit-title">${id}${highlightText(hit.title, query)}</span>${snip}</button>`;
+}
+
+function showShelfError() {
+  if (!els.shelfResults) return;
+  els.coverScreen.classList.add("shelf-searching");
+  els.shelfResults.hidden = false;
+  const status = els.shelfResults.querySelector(".shelf-results-status");
+  const list = els.shelfResults.querySelector(".shelf-results-list");
+  if (status) status.textContent = "Не удалось открыть книги.";
+  if (list) list.innerHTML = "";
+  shelfListKey = "";
+}
+
+function renderShelfResults() {
+  if (!els.shelfSearch || !els.shelfResults) return;
+  const query = normalizeQuery(els.shelfSearch.value);
+  const active = query.length >= 2;
+  els.coverScreen.classList.toggle("shelf-searching", active);
+  if (!active) {
+    els.shelfResults.hidden = true;
+    shelfListKey = "";
+    return;
+  }
+  els.shelfResults.hidden = false;
+  const status = els.shelfResults.querySelector(".shelf-results-status");
+  const list = els.shelfResults.querySelector(".shelf-results-list");
+  if (!status || !list) return;
+  if (!library.books.length) {
+    status.textContent = "Открываю оглавления…";
+    list.innerHTML = "";
+    shelfListKey = "";
+    return;
+  }
+  const hits = collectShelfHits(query);
+  const shown = hits.slice(0, SHELF_HITS_LIMIT);
+  const pending = library.done < library.total;
+  let text = shelfStatus(hits.length, pending);
+  if (hits.length > shown.length) text += ` · показаны первые ${shown.length}`;
+  status.textContent = text;
+  const listKey = `${query}|${shown.map((hit) => `${hit.kind}:${hit.volume}:${hit.pageId || ""}:${hit.snip ? 1 : 0}`).join("|")}`;
+  if (listKey === shelfListKey) return;
+  shelfListKey = listKey;
+  list.innerHTML = shown.map((hit) => renderShelfHit(hit, query)).join("");
+}
+
+async function openShelfHit(btn) {
+  const volume = btn.dataset.volume;
+  if (!volume || !VOLUMES[volume]) return;
+  if (btn.dataset.kind === "book") {
+    await openVolume(volume);
+    return;
+  }
+  const ok = await ensureVolume(volume);
+  if (!ok) return;
+  const index = state.pages.findIndex((page) => String(page.id) === btn.dataset.page);
+  if (index >= 0) openPage(index);
+  else showToc();
 }
 
 function hasCommentText(text) {
@@ -789,6 +1109,33 @@ function toggleListen() {
 async function boot() {
   els.shelfBooks.forEach((button) => {
     button.addEventListener("click", () => openVolume(button.dataset.volume));
+  });
+  els.shelfSearch?.addEventListener("focus", () => {
+    loadLibrary().catch(() => {});
+  });
+  els.shelfSearch?.addEventListener("input", () => {
+    const query = normalizeQuery(els.shelfSearch.value);
+    if (query.length >= 2) {
+      els.coverScreen.scrollTop = 0;
+      loadLibrary().then(() => renderShelfResults()).catch(() => showShelfError());
+    }
+    renderShelfResults();
+  });
+  els.shelfSearch?.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && els.shelfSearch.value) {
+      e.preventDefault();
+      els.shelfSearch.value = "";
+      renderShelfResults();
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const first = els.shelfResults?.querySelector(".shelf-hit");
+      if (first) openShelfHit(first);
+    }
+  });
+  els.shelfResults?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".shelf-hit");
+    if (btn) openShelfHit(btn);
   });
   els.coverHome.addEventListener("click", () => {
     if (state.volume) showBookCover();
