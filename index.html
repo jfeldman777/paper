@@ -4,20 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Яков Фельдман</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body class="cover-open">
   <div id="cover-screen" aria-hidden="false">
     <div class="shelf">
       <p class="cover-author">Яков Фельдман</p>
       <label class="shelf-search">
-        <span class="search-loupe" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <circle cx="11" cy="11" r="6.5"></circle>
-            <path d="M20 20l-3.2-3.2"></path>
-          </svg>
+        <span class="shelf-search-row">
+          <span class="search-loupe" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="6.5"></circle>
+              <path d="M20 20l-3.2-3.2"></path>
+            </svg>
+          </span>
+          <input id="shelf-search" type="search" placeholder="Поиск по всем книгам…" autocomplete="off" spellcheck="false" aria-label="Поиск по всем книгам, кроме Дискурса и Открытий">
         </span>
-        <input id="shelf-search" type="search" placeholder="Поиск по всем книгам…" autocomplete="off" spellcheck="false" aria-label="Поиск по всем книгам">
+        <span class="shelf-search-hint">кроме Дискурса и Открытий</span>
       </label>
       <div id="shelf-results" hidden>
         <p class="shelf-results-status" aria-live="polite"></p>
