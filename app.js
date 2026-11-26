@@ -42,6 +42,19 @@ const VOLUMES = {
   uchebnik: { title: "Учебник к Атласу", manifest: "uchebnik/pages.json" },
   canon: { title: "Канон", manifest: "canon/pages.json" },
   slovar: { title: "Викисловарь", manifest: "slovar/pages.json", href: "slovar/" },
+  gala: {
+    title: "Дискурс",
+    manifest: "https://jfeldman777.github.io/gala/pages.json",
+    base: "https://jfeldman777.github.io/gala/",
+    href: "https://jfeldman777.github.io/gala/",
+    query: "p",
+  },
+  open: {
+    title: "Книга Открытий",
+    manifest: "https://jfeldman777.github.io/open/pages.json",
+    base: "https://jfeldman777.github.io/open/",
+    href: "https://jfeldman777.github.io/open/",
+  },
 };
 
 let searchGen = 0;
@@ -53,6 +66,31 @@ function titleFromMd(path) {
     .replace(/\.md$/i, "")
     .replace(/^(?:\d+(?:\.\d+)*|[IVX]+)\.?\s*/, "")
     .trim();
+}
+
+function resolveLinkedPages(rawPages) {
+  const pages = rawPages.map((page) => {
+    const name = String(page.md || "").split("/").pop().replace(/\.md$/i, "");
+    const match = name.match(/^(\d+(?:\.\d+)*)-(\d+(?:\.\d+)*)/);
+    const include = page.include || (match ? match[2] : null);
+    const id = include && match ? match[1] : page.id;
+    return { ...page, id, include, sourcePage: null };
+  });
+  const byId = new Map(pages.map((page) => [String(page.id), page]));
+  for (const page of pages) {
+    if (!page.include) continue;
+    const source = byId.get(String(page.include));
+    if (!source || source.include) continue;
+    page.sourcePage = source;
+  }
+  return pages;
+}
+
+function pageFileUrl(book, page) {
+  const file = (page.sourcePage || page).md || "";
+  if (!file) return "";
+  if (/^https?:/i.test(file)) return file;
+  return book.base ? book.base + file : file;
 }
 
 function escapeHtml(text) {
@@ -490,6 +528,7 @@ async function fetchManifests() {
         const manifest = await res.json();
         manifestTitle = manifest.title || vol.title;
         pages = manifest.pages || [];
+        if (id === "gala") pages = resolveLinkedPages(pages);
         if (!card.year && manifest.year) card.year = String(manifest.year);
       } catch {
         pages = [];
@@ -499,6 +538,7 @@ async function fetchManifests() {
         title: card.title,
         manifestTitle,
         year: card.year,
+        base: vol.base || "",
         foldedShelf: foldSearch(card.title).replace(/\s+/g, " "),
         foldedTitle: foldSearch([card.title, manifestTitle].join("\n")).replace(/\s+/g, " "),
         pages,
@@ -509,8 +549,9 @@ async function fetchManifests() {
   library.pages = [];
   for (const book of books) {
     for (const page of book.pages) {
-      const title = page.title || titleFromMd(page.md || "");
-      const subtitle = page.subtitle || "";
+      const shown = page.sourcePage || page;
+      const title = page.title || titleFromMd(shown.md || page.md || "");
+      const subtitle = page.subtitle || page.section || "";
       const item = {
         volume: book.id,
         bookTitle: book.title,
@@ -518,9 +559,10 @@ async function fetchManifests() {
         id: String(page.id),
         title,
         subtitle,
-        md: page.md || "",
+        md: pageFileUrl(book, page),
         comment: page.comment || "",
         anchor: page.anchor || "",
+        also: "",
         foldedTitle: foldSearch([title, subtitle].filter(Boolean).join(" ")).replace(/\s+/g, " "),
         plain: page.text || "",
         folded: page.text ? foldSearch(page.text) : "",
@@ -532,6 +574,27 @@ async function fetchManifests() {
   }
   library.total = library.pages.length;
   library.done = library.pages.filter((page) => page.ready).length;
+  await markSharedDiscourse();
+}
+
+async function markSharedDiscourse() {
+  try {
+    const res = await fetch(`https://jfeldman777.github.io/open/gala-groups.json?v=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return;
+    const groups = await res.json();
+    const place = new Map();
+    for (const group of Object.values(groups)) {
+      const title = group.title || "";
+      for (const id of group.pages || []) place.set(String(id), title);
+    }
+    for (const page of library.pages) {
+      if (page.volume !== "gala" || !place.has(page.id)) continue;
+      const title = place.get(page.id);
+      page.also = title ? `в Открытиях: ${title}` : "в Открытиях";
+    }
+  } catch {
+    /* обе книги всё равно ищутся, пометка о переносе не обязательна */
+  }
 }
 
 function loadLibrary() {
@@ -608,6 +671,7 @@ function collectShelfHits(query) {
       year: page.year,
       title: page.title,
       subtitle: page.subtitle,
+      also: page.also || "",
       titleHit,
       snip,
     });
@@ -633,7 +697,7 @@ function renderShelfHit(hit, query) {
     const snip = hit.snip ? `<span class="shelf-hit-snip">${hit.snip}</span>` : "";
     return `<button type="button" class="shelf-hit" data-kind="book" data-volume="${escapeAttr(hit.volume)}"><span class="shelf-hit-book">Книга${year}</span><span class="shelf-hit-title">${highlightText(hit.title, query)}</span>${snip}</button>`;
   }
-  const where = `${escapeHtml(hit.bookTitle)}${hit.year ? ` · ${escapeHtml(hit.year)}` : ""}`;
+  const where = `${escapeHtml(hit.bookTitle)}${hit.year ? ` · ${escapeHtml(hit.year)}` : ""}${hit.also ? ` · ${escapeHtml(hit.also)}` : ""}`;
   const id = hit.subtitle
     ? `<span class="shelf-hit-id">${escapeHtml(hit.subtitle)}</span>`
     : hit.pageId
@@ -686,21 +750,22 @@ function renderShelfResults() {
   list.innerHTML = shown.map((hit) => renderShelfHit(hit, query)).join("");
 }
 
-function slovarUrl(volume, pageId) {
+function externalUrl(volume, pageId) {
   const vol = VOLUMES[volume];
   if (!vol?.href) return "";
   if (!pageId) return vol.href;
   const page = library.pages.find((item) => item.volume === volume && item.id === pageId);
   if (page?.anchor) return `${vol.href}#${page.anchor}`;
-  if (/^\d+$/.test(pageId)) return `${vol.href}#article-${pageId.padStart(3, "0")}`;
-  return `${vol.href}#${pageId}`;
+  if (volume === "slovar" && /^\d+$/.test(pageId)) return `${vol.href}#article-${pageId.padStart(3, "0")}`;
+  if (vol.query) return `${vol.href}?${vol.query}=${encodeURIComponent(pageId)}`;
+  return `${vol.href}#${encodeURIComponent(pageId)}`;
 }
 
 async function openShelfHit(btn) {
   const volume = btn.dataset.volume;
   if (!volume || !VOLUMES[volume]) return;
   if (VOLUMES[volume].href) {
-    location.href = slovarUrl(volume, btn.dataset.kind === "book" ? "" : btn.dataset.page);
+    location.href = externalUrl(volume, btn.dataset.kind === "book" ? "" : btn.dataset.page);
     return;
   }
   if (btn.dataset.kind === "book") {
@@ -984,7 +1049,7 @@ async function route() {
     return;
   }
   if (VOLUMES[target.volume].href) {
-    location.replace(slovarUrl(target.volume, target.page === "toc" || target.page === "cover" ? "" : target.page));
+    location.replace(externalUrl(target.volume, target.page === "toc" || target.page === "cover" ? "" : target.page));
     return;
   }
   await ensureVolume(target.volume);
@@ -1134,7 +1199,12 @@ function toggleListen() {
 
 async function boot() {
   els.shelfBooks.forEach((button) => {
-    button.addEventListener("click", () => openVolume(button.dataset.volume));
+    button.addEventListener("click", (event) => {
+      const vol = VOLUMES[button.dataset.volume];
+      if (button.tagName === "A" && vol?.href) return;
+      event.preventDefault();
+      openVolume(button.dataset.volume);
+    });
   });
   els.shelfSearch?.addEventListener("focus", () => {
     loadLibrary().catch(() => {});
