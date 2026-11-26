@@ -41,6 +41,7 @@ const VOLUMES = {
   dnevnik: { title: "Дневник", manifest: "dnevnik/pages.json" },
   uchebnik: { title: "Учебник к Атласу", manifest: "uchebnik/pages.json" },
   canon: { title: "Канон", manifest: "canon/pages.json" },
+  kartina: { title: "Картина мира", manifest: "kartina/pages.json" },
   slovar: { title: "Викисловарь", manifest: "slovar/pages.json", href: "slovar/" },
   gala: {
     title: "Дискурс",
