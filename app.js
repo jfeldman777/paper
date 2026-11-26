@@ -41,6 +41,7 @@ const VOLUMES = {
   dnevnik: { title: "Дневник", manifest: "dnevnik/pages.json" },
   uchebnik: { title: "Учебник к Атласу", manifest: "uchebnik/pages.json" },
   canon: { title: "Канон", manifest: "canon/pages.json" },
+  slovar: { title: "Викисловарь", manifest: "slovar/pages.json", href: "slovar/" },
 };
 
 let searchGen = 0;
@@ -519,12 +520,13 @@ async function fetchManifests() {
         subtitle,
         md: page.md || "",
         comment: page.comment || "",
+        anchor: page.anchor || "",
         foldedTitle: foldSearch([title, subtitle].filter(Boolean).join(" ")).replace(/\s+/g, " "),
-        plain: "",
-        folded: "",
+        plain: page.text || "",
+        folded: page.text ? foldSearch(page.text) : "",
         ready: false,
       };
-      if (!item.md && !item.comment) item.ready = true;
+      if (page.text || (!item.md && !item.comment)) item.ready = true;
       library.pages.push(item);
     }
   }
@@ -684,9 +686,23 @@ function renderShelfResults() {
   list.innerHTML = shown.map((hit) => renderShelfHit(hit, query)).join("");
 }
 
+function slovarUrl(volume, pageId) {
+  const vol = VOLUMES[volume];
+  if (!vol?.href) return "";
+  if (!pageId) return vol.href;
+  const page = library.pages.find((item) => item.volume === volume && item.id === pageId);
+  if (page?.anchor) return `${vol.href}#${page.anchor}`;
+  if (/^\d+$/.test(pageId)) return `${vol.href}#article-${pageId.padStart(3, "0")}`;
+  return `${vol.href}#${pageId}`;
+}
+
 async function openShelfHit(btn) {
   const volume = btn.dataset.volume;
   if (!volume || !VOLUMES[volume]) return;
+  if (VOLUMES[volume].href) {
+    location.href = slovarUrl(volume, btn.dataset.kind === "book" ? "" : btn.dataset.page);
+    return;
+  }
   if (btn.dataset.kind === "book") {
     await openVolume(volume);
     return;
@@ -965,6 +981,10 @@ async function route() {
   const target = parseLocation();
   if (!target || !VOLUMES[target.volume]) {
     showCover();
+    return;
+  }
+  if (VOLUMES[target.volume].href) {
+    location.replace(slovarUrl(target.volume, target.page === "toc" || target.page === "cover" ? "" : target.page));
     return;
   }
   await ensureVolume(target.volume);
